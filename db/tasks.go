@@ -17,7 +17,7 @@ type Task struct {
 
 func Init(dbPath string) error {
 	var err error
-	db, err := bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	db, err = bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func CreateTask(task string) (int, error) {
 		b := tx.Bucket(taskBucket)
 		id64, _ := b.NextSequence()
 		id = int(id64)
-		key := itob(int(id64))
+		key := itob(id)
 		return b.Put(key, []byte(task))
 	})
 	if err != nil {
@@ -58,8 +58,14 @@ func AllTasks() ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return tasks, nil
+}
+
+func DeleteTask(key int) error {
+	return db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(taskBucket)
+		return b.Delete(itob(key))
+	})
 }
 
 func itob(v int) []byte {
